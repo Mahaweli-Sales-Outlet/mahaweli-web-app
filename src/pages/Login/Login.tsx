@@ -1,51 +1,21 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { authApi } from "@/api/auth";
-import axios from "axios";
-import LoginHeader from "./LoginHeader";
-import LoginError from "./LoginError";
-import LoginFields from "./LoginFields";
-import RegisterLink from "./RegisterLink";
-import DemoCredentials from "./DemoCredentials";
+import { ErrorAlert } from "@/components/auth";
+import {
+  LoginHeader,
+  LoginFields,
+  RegisterLink,
+  DemoCredentials,
+} from "./components";
+import { useLoginForm, useLogin } from "./hooks";
 
-const Login: React.FC = () => {
-  const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+export default function Login() {
+  const { email, password, handleEmailChange, handlePasswordChange, getFormData } = useLoginForm();
+  const { error, loading, login } = useLogin();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
-    try {
-      const response = await authApi.login({ email, password });
-      localStorage.setItem("accessToken", response.data.accessToken);
-      localStorage.setItem("refreshToken", response.data.refreshToken);
-      localStorage.setItem("userRole", response.data.user.role);
-      localStorage.setItem("userEmail", response.data.user.email);
-      localStorage.setItem("userName", response.data.user.name);
-      localStorage.setItem("userId", response.data.user.id);
-      if (response.data.user.role === "manager") {
-        navigate("/admin/dashboard");
-      } else if (response.data.user.role === "customer") {
-        navigate("/products");
-      } else {
-        navigate("/");
-      }
-    } catch (err: any) {
-      if (axios.isAxiosError(err) && err.response) {
-        setError(
-          err.response.data?.error?.message || "Invalid email or password"
-        );
-      } else {
-        setError("An error occurred. Please try again.");
-      }
-      setLoading(false);
-    }
+    await login(getFormData());
   };
 
   return (
@@ -54,12 +24,12 @@ const Login: React.FC = () => {
         <LoginHeader />
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <LoginError error={error} />
+            {error && <ErrorAlert message={error} />}
             <LoginFields
               email={email}
               password={password}
-              onEmailChange={(e) => setEmail(e.target.value)}
-              onPasswordChange={(e) => setPassword(e.target.value)}
+              onEmailChange={handleEmailChange}
+              onPasswordChange={handlePasswordChange}
             />
             <Button
               type="submit"
@@ -75,6 +45,4 @@ const Login: React.FC = () => {
       </Card>
     </div>
   );
-};
-
-export default Login;
+}
