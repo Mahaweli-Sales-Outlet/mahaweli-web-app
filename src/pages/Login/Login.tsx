@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { authApi } from "@/api/auth";
 import axios from "axios";
-import LoginHeader from "./Login/LoginHeader";
-import LoginError from "./Login/LoginError";
-import LoginFields from "./Login/LoginFields";
+import LoginHeader from "./LoginHeader";
+import LoginError from "./LoginError";
+import LoginFields from "./LoginFields";
 import RegisterLink from "./RegisterLink";
-import DemoCredentials from "./Login/DemoCredentials";
+import DemoCredentials from "./DemoCredentials";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();

@@ -3,6 +3,7 @@ import { Provider } from "react-redux";
 import { store } from "./redux/store";
 import Layout from "@/components/Layout";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { Toaster } from "sonner";
 
 // Pages
 import HomePage from "@/pages/HomePage";
@@ -13,7 +14,9 @@ import Checkout from "@/pages/Order/Checkout";
 import OrderConfirmation from "@/pages/Order/OrderConfirmation";
 import About from "@/pages/About";
 import Contact from "@/pages/Contact";
-import Login from "@/pages/Login";
+import Login from "@/pages/Login/Login";
+import Register from "@/pages/Register";
+import UserProfile from "@/pages/UserProfile";
 
 // Admin Pages
 import AdminDashboard from "@/pages/Admin/AdminDashboard";
@@ -26,9 +29,17 @@ function App() {
   return (
     <Provider store={store}>
       <BrowserRouter>
+        <Toaster
+          position="top-right"
+          richColors
+          duration={5000}
+          closeButton
+          expand={true}
+        />
         <Routes>
-          {/* Login Route */}
+          {/* Auth Routes */}
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
           {/* Public Routes */}
           <Route path="/" element={<Layout />}>
@@ -40,6 +51,7 @@ function App() {
             <Route path="order-confirmation" element={<OrderConfirmation />} />
             <Route path="about" element={<About />} />
             <Route path="contact" element={<Contact />} />
+            <Route path="profile" element={<UserProfile />} />
           </Route>
 
           {/* Protected Admin Routes */}

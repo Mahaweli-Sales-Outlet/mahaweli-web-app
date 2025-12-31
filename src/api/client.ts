@@ -13,7 +13,7 @@ export const api = axios.create({
 
 // Add request interceptor for authentication
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("auth_token");
+  const token = localStorage.getItem("accessToken");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -25,9 +25,17 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Handle unauthorized access
-      localStorage.removeItem("auth_token");
-      window.location.href = "/";
+      const token = localStorage.getItem("accessToken");
+      // Only redirect if user is already authenticated (not during login)
+      if (token) {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("userRole");
+        localStorage.removeItem("userEmail");
+        localStorage.removeItem("userName");
+        localStorage.removeItem("userId");
+        window.location.href = "/login";
+      }
     }
     return Promise.reject(error);
   }
@@ -50,9 +58,4 @@ export const orderApi = {
     api.patch(`/orders/${id}/status`, { status }),
 };
 
-export const authApi = {
-  login: (email: string, password: string) =>
-    api.post("/auth/login", { email, password }),
-  register: (data: any) => api.post("/auth/register", data),
-  me: () => api.get("/auth/me"),
-};
+// Remove duplicate authApi. Use only the backend API from auth.ts
