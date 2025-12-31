@@ -1,22 +1,22 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Provider } from "react-redux";
 import { store } from "./redux/store";
-import Layout from "@/components/Layout";
+import Layout from "@/components/layout/Layout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { Toaster } from "sonner";
 
 // Pages
-import HomePage from "@/pages/HomePage";
-import Products from "@/pages/Products";
-import ProductDetails from "@/pages/ProductDetails";
+import HomePage from "@/pages/Home/HomePage";
+import Products from "@/pages/Products/Products";
+import ProductDetails from "@/pages/Products/ProductDetails";
 import Cart from "@/pages/Order/Cart";
 import Checkout from "@/pages/Order/Checkout";
 import OrderConfirmation from "@/pages/Order/OrderConfirmation";
-import About from "@/pages/About";
-import Contact from "@/pages/Contact";
+import About from "@/pages/About/About";
+import Contact from "@/pages/Contact/Contact";
 import Login from "@/pages/Login/Login";
-import Register from "@/pages/Register";
-import UserProfile from "@/pages/UserProfile";
+import Register from "@/pages/Register/Register";
+import UserProfile from "@/pages/Profile/UserProfile";
 
 // Admin Pages
 import AdminDashboard from "@/pages/Admin/AdminDashboard";
