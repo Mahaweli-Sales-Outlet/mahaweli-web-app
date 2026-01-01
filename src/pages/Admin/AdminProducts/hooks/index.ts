@@ -1,1 +1,8 @@
-export { useProductsData, useProductCategories, useDeleteProduct, useProductFilters } from "./useProductsHooks";
+export { 
+  useProductsData, 
+  useProductCategories, 
+  useDeleteProduct, 
+  useProductFilters,
+  useStockAdjustment,
+  useBulkOperations,
+} from "./useProductsHooks";

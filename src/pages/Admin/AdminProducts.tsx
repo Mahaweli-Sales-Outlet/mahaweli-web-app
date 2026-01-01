@@ -8,12 +8,18 @@ import {
   ProductFilters,
   ProductTable,
   DeleteProductDialog,
+  BulkActions,
+  StockAdjustmentDialog,
+  ExportButton,
+  LowStockAlert,
 } from "./AdminProducts/components";
 import {
   useProductsData,
   useProductCategories,
   useDeleteProduct,
   useProductFilters,
+  useStockAdjustment,
+  useBulkOperations,
 } from "./AdminProducts/hooks";
 
 export default function AdminProducts() {
@@ -22,6 +28,8 @@ export default function AdminProducts() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [stockFilter, setStockFilter] = useState("all");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [stockAdjustProduct, setStockAdjustProduct] = useState<any>(null);
 
   const { products, isLoading } = useProductsData();
   const categories = useProductCategories(products);
@@ -32,6 +40,41 @@ export default function AdminProducts() {
     stockFilter
   );
   const deleteMutation = useDeleteProduct();
+  const stockAdjustMutation = useStockAdjustment();
+  const bulkOperations = useBulkOperations();
+
+  const handleBulkDelete = () => {
+    if (window.confirm(`Delete ${selectedIds.length} products?`)) {
+      bulkOperations.deleteBulk.mutate(selectedIds, {
+        onSuccess: () => setSelectedIds([]),
+      });
+    }
+  };
+
+  const handleBulkActivate = () => {
+    bulkOperations.updateBulk.mutate(
+      { productIds: selectedIds, updates: { is_active: true } },
+      { onSuccess: () => setSelectedIds([]) }
+    );
+  };
+
+  const handleBulkDeactivate = () => {
+    bulkOperations.updateBulk.mutate(
+      { productIds: selectedIds, updates: { is_active: false } },
+      { onSuccess: () => setSelectedIds([]) }
+    );
+  };
+
+  const handleStockAdjust = (adjustment: any) => {
+    if (stockAdjustProduct) {
+      stockAdjustMutation.mutate(
+        { productId: stockAdjustProduct.id, data: adjustment },
+        {
+          onSuccess: () => setStockAdjustProduct(null),
+        }
+      );
+    }
+  };
 
   return (
     <div className="min-h-screen p-8">
@@ -54,16 +97,29 @@ export default function AdminProducts() {
             </h1>
             <p className="text-gray-600">Manage your product inventory</p>
           </div>
-          <Button
-            onClick={() => navigate(createPageUrl("AdminProductForm"))}
-            className="bg-green-500 hover:bg-green-600 text-white gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Add New Product
-          </Button>
+          <div className="flex gap-3">
+            <ExportButton products={filteredProducts} />
+            <Button
+              onClick={() => navigate(createPageUrl("AdminProductForm"))}
+              className="bg-green-500 hover:bg-green-600 text-white gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add New Product
+            </Button>
+          </div>
         </div>
 
         <ProductStats products={products} />
+
+        <LowStockAlert products={products} />
+
+        <BulkActions
+          selectedIds={selectedIds}
+          onDelete={handleBulkDelete}
+          onActivate={handleBulkActivate}
+          onDeactivate={handleBulkDeactivate}
+          onClearSelection={() => setSelectedIds([])}
+        />
 
         <ProductFilters
           searchQuery={searchQuery}
@@ -81,14 +137,33 @@ export default function AdminProducts() {
           products={filteredProducts}
           isLoading={isLoading}
           onDelete={setDeleteProductId}
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
+          onStockAdjust={(productId) => {
+            const product = products.find((p) => p.id === productId);
+            if (product) setStockAdjustProduct(product);
+          }}
         />
       </div>
 
       <DeleteProductDialog
         isOpen={!!deleteProductId}
-        onConfirm={() => deleteProductId && deleteMutation.mutate(deleteProductId)}
+        onConfirm={() =>
+          deleteProductId &&
+          deleteMutation.mutate(deleteProductId, {
+            onSuccess: () => setDeleteProductId(null),
+          })
+        }
         onCancel={() => setDeleteProductId(null)}
         isLoading={deleteMutation.isPending}
+      />
+
+      <StockAdjustmentDialog
+        isOpen={!!stockAdjustProduct}
+        product={stockAdjustProduct}
+        onClose={() => setStockAdjustProduct(null)}
+        onAdjust={handleStockAdjust}
+        isLoading={stockAdjustMutation.isPending}
       />
     </div>
   );

@@ -19,6 +19,9 @@ export default function AdminProductForm() {
     setFormData,
     productId,
     uploading,
+    errors,
+    categories,
+    categoriesLoading,
     handleImageUpload,
     handleSubmit,
     saveMutation,
@@ -57,11 +60,15 @@ export default function AdminProductForm() {
               <ProductBasicFields
                 formData={formData}
                 onFormChange={handleFieldChange}
+                errors={errors}
               />
 
               <ProductPriceAndCategory
                 formData={formData}
                 onFormChange={handleFieldChange}
+                errors={errors}
+                categories={categories}
+                loading={categoriesLoading}
               />
 
               <ProductAdvancedFields

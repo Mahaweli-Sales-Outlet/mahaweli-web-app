@@ -1,5 +1,5 @@
 import { DEFAULT_PRODUCT_DESCRIPTION } from "../constants";
-import type { Product } from "@/types";
+import type { Product } from "@/types/product.types";
 
 interface ProductDescriptionProps {
   product: Product;

@@ -23,9 +23,14 @@ export function useLogin() {
       const result = await dispatch(loginThunk(credentials));
       
       if (loginThunk.fulfilled.match(result)) {
+        const userRole = result.payload.role;
+        const redirectPath = getRedirectPath(userRole);
+        
+        console.log("Login successful - User role:", userRole);
+        console.log("Redirect path:", redirectPath);
+        
         toast.success("Login successful! Welcome back.");
-        const redirectPath = getRedirectPath(result.payload.role);
-        navigate(redirectPath);
+        navigate(redirectPath, { replace: true });
       } else {
         setLoading(false);
       }

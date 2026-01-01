@@ -5,11 +5,13 @@ import type { ProductFormData } from "../constants";
 interface ProductBasicFieldsProps {
   formData: ProductFormData;
   onFormChange: (data: Partial<ProductFormData>) => void;
+  errors?: { [key: string]: string };
 }
 
 export function ProductBasicFields({
   formData,
   onFormChange,
+  errors = {},
 }: ProductBasicFieldsProps) {
   return (
     <>
@@ -22,8 +24,11 @@ export function ProductBasicFields({
           onChange={(e) => onFormChange({ name: e.target.value })}
           placeholder="e.g., Pure Coconut Oil, Kitul Treacle"
           required
-          className="h-12"
+          className={`h-12 ${errors.name ? "border-red-500" : ""}`}
         />
+        {errors.name && (
+          <p className="text-sm text-red-600">{errors.name}</p>
+        )}
       </div>
 
       {/* Brand */}

@@ -33,21 +33,6 @@ export function ProductAdvancedFields({
       <div className="space-y-4 p-6 bg-gray-50 rounded-xl">
         <div className="flex items-center justify-between">
           <div>
-            <Label htmlFor="in_stock" className="text-base">
-              In Stock
-            </Label>
-            <p className="text-sm text-gray-600">Product is available for purchase</p>
-          </div>
-          <Switch
-            id="in_stock"
-            checked={formData.in_stock}
-            onCheckedChange={(checked) =>
-              onFormChange({ in_stock: checked })
-            }
-          />
-        </div>
-        <div className="flex items-center justify-between">
-          <div>
             <Label htmlFor="featured" className="text-base">
               Featured Product
             </Label>
@@ -55,9 +40,9 @@ export function ProductAdvancedFields({
           </div>
           <Switch
             id="featured"
-            checked={formData.featured}
+            checked={formData.is_featured}
             onCheckedChange={(checked) =>
-              onFormChange({ featured: checked })
+              onFormChange({ is_featured: checked })
             }
           />
         </div>

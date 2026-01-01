@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { ArrowLeft } from "lucide-react";
 import QuantitySelector from "@/components/ui/QuantitySelector";
@@ -15,16 +14,12 @@ import { useProduct, useCart } from "./hooks";
 
 export default function ProductDetail() {
   const navigate = useNavigate();
-  const [productId, setProductId] = useState<string | null>(null);
+  const { id: productId } = useParams<{ id: string }>();
 
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const id = urlParams.get("id");
-    setProductId(id);
-  }, []);
-
-  const { product } = useProduct(productId);
+  const { product } = useProduct(productId || null);
   const { quantity, adding, incrementQuantity, decrementQuantity, addToCart } = useCart();
+
+  const inStock = product ? product.stock_quantity > 0 : false;
 
   if (!productId) {
     return (
@@ -68,11 +63,11 @@ export default function ProductDetail() {
             <div className="space-y-4 sm:space-y-6">
               <ProductHeader product={product} />
               <StockStatus
-                inStock={product.in_stock ?? false}
-                stockCount={product.stock}
+                inStock={inStock}
+                stockCount={product.stock_quantity}
               />
               
-              {product.in_stock && (
+              {inStock && (
                 <QuantitySelector
                   quantity={quantity}
                   onIncrement={incrementQuantity}
@@ -85,7 +80,7 @@ export default function ProductDetail() {
               
               <div className="flex gap-3 sm:gap-4 pt-4 sm:pt-6">
                 <AddToCartButton
-                  inStock={product.in_stock ?? false}
+                  inStock={inStock}
                   loading={adding}
                   onClick={addToCart}
                 />

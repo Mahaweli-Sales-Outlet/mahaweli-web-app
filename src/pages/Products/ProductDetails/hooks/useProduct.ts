@@ -1,23 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
-import { productApi } from "@/api/client";
-import type { Product } from "@/types";
+import { productApi } from "@/api/products";
+import type { Product } from "@/types/product.types";
 
 export function useProduct(productId: string | null) {
-  const { data: products = [], isLoading, error } = useQuery({
-    queryKey: ["products"],
+  const { data: product, isLoading, error } = useQuery({
+    queryKey: ["product", productId],
     queryFn: async () => {
-      const response = await productApi.getAll();
-      return response.data;
+      // Use getById for single product fetch
+      const result = await productApi.getById(productId!);
+      return result;
     },
     enabled: !!productId,
   });
 
-  const product = (products as Product[]).find(
-    (p) => String(p.id) === productId
-  );
-
   return {
-    product,
+    product: product as Product | undefined,
     isLoading,
     error,
   };

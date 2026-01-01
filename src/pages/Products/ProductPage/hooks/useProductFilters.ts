@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import type { Product } from "@/types";
+import type { Product } from "@/types/product.types";
 
 export function useProductFilters(products: Product[]) {
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -15,18 +15,22 @@ export function useProductFilters(products: Product[]) {
   }, []);
 
   const filteredProducts = useMemo(() => {
-    return products.filter((product) => {
+    // Ensure products is an array
+    const productList = Array.isArray(products) ? products : [];
+    
+    return productList.filter((product) => {
       // Handle Featured category filter
       if (selectedCategory === "Featured") {
         const matchesSearch =
           product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           product.description?.toLowerCase().includes(searchQuery.toLowerCase());
-        return product.featured && matchesSearch;
+        return product.is_featured && matchesSearch;
       }
 
-      // Handle other categories
+      // Handle other categories - support both old 'category' and new 'category_name'
+      const productCategory = (product as any).category_name || (product as any).category || "";
       const matchesCategory =
-        !selectedCategory || product.category === selectedCategory;
+        !selectedCategory || productCategory === selectedCategory;
       const matchesSearch =
         product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.description?.toLowerCase().includes(searchQuery.toLowerCase());

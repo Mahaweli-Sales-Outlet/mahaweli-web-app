@@ -5,7 +5,6 @@ import {
   LoginHeader,
   LoginFields,
   RegisterLink,
-  DemoCredentials,
 } from "./components";
 import { useLoginForm, useLogin } from "./hooks";
 
@@ -39,7 +38,7 @@ export default function Login() {
               {loading ? "Signing in..." : "Sign In"}
             </Button>
             <RegisterLink />
-            <DemoCredentials />
+            
           </form>
         </CardContent>
       </Card>

@@ -1,6 +1,8 @@
 import { configureStore } from "@reduxjs/toolkit";
 import cartReducer from "./slices/cartSlice";
 import authReducer, { type AuthState } from "./slices/authSlice";
+import categoryReducer from "./slices/categorySlice";
+import productReducer from "./slices/productSlice";
 
 // Load auth state from localStorage on app startup
 function loadAuthState(): AuthState {
@@ -43,6 +45,8 @@ export const store = configureStore({
   reducer: {
     cart: cartReducer,
     auth: authReducer,
+    category: categoryReducer,
+    product: productReducer,
   },
   preloadedState: {
     auth: loadAuthState(),
@@ -51,3 +55,4 @@ export const store = configureStore({
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
+export type AppStore = typeof store;

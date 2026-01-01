@@ -1,3 +1,4 @@
+// Legacy constant - kept for backwards compatibility
 export const PRODUCT_CATEGORIES = [
   "Dairy",
   "Oils & Ghee",
@@ -14,7 +15,7 @@ export const INITIAL_FORM_DATA = {
   brand: "",
   description: "",
   price: "",
-  category: "Dairy",
+  category_id: "",
   image_url: "",
   in_stock: true,
   stock_quantity: 0,

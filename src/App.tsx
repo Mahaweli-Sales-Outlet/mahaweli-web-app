@@ -9,6 +9,7 @@ import { Toaster } from "sonner";
 import HomePage from "@/pages/Home/HomePage";
 import Products from "@/pages/Products/ProductPage/Products";
 import ProductDetails from "@/pages/Products/ProductDetails/ProductDetails";
+import CategoriesPage from "@/pages/Categories/Categories";
 import Cart from "@/pages/Order/Cart/Cart";
 import Checkout from "@/pages/Order/Checkout/Checkout";
 import OrderConfirmation from "@/pages/Order/OrderConfirmation/OrderConfirmation";
@@ -48,6 +49,7 @@ function AppRoutes() {
         {/* Public Routes */}
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
+          <Route path="categories" element={<CategoriesPage />} />
           <Route path="products" element={<Products />} />
           <Route path="products/:id" element={<ProductDetails />} />
           <Route path="cart" element={<Cart />} />

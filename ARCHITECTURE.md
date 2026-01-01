@@ -27,6 +27,8 @@ src/redux/
 └── slices/
     ├── authSlice.ts      # Authentication state
     ├── cartSlice.ts      # Shopping cart state
+    ├── categorySlice.ts  # Category state & hierarchy
+    ├── productSlice.ts   # Product state, filters, pagination
     └── [feature]Slice.ts # Other feature states
 ```
 
@@ -467,6 +469,63 @@ export function useLogin() {
 
 ---
 **Last Updated**: 01/01/2026  
-**Reference Pages**: HomePage, Products, Login, Register, Contact, Cart, About, Profile  
-**Redux Slices**: authSlice, cartSlice  
-**Key Patterns**: Store Injector, Token Refresh, Auto Error Clearing
+**Reference Pages**: HomePage, Products, Login, Register, Contact, Cart, About, Profile, Categories  
+**Redux Slices**: authSlice, cartSlice, categorySlice, productSlice  
+**Key Patterns**: Store Injector, Token Refresh, Auto Error Clearing, Category Hierarchy, Product Filters
+
+## Category Integration
+
+### Category State Structure
+```tsx
+// Redux Slice: categorySlice.ts
+interface CategoryState {
+  categories: CategoryWithChildrenResponse[];  // Hierarchical categories
+  topLevelCategories: Category[];               // Root categories only
+  selectedCategory: Category | null;            // Current selected category
+  categoryChildren: Category[];                 // Direct children
+  loading: boolean;
+  error: string | null;
+}
+```
+
+### Category API Endpoints
+- `GET /api/categories` - All categories with hierarchy
+- `GET /api/categories/top-level` - Root categories only
+- `GET /api/categories/:id` - Single category
+- `GET /api/categories/:id/children` - Direct children
+- `POST /api/categories` - Create (admin only)
+- `PUT /api/categories/:id` - Update (admin only)
+- `DELETE /api/categories/:id` - Delete (admin only)
+
+### Usage Example
+```tsx
+// In Components or Pages
+import { useCategories, useTopLevelCategories } from "@/hooks/useCategories";
+import { CategoryList, CategoryBreadcrumb } from "@/components/categories";
+
+export function CategoriesPage() {
+  const { categories, loading, error } = useCategories();
+  
+  return (
+    <div>
+      {loading && <Spinner />}
+      {error && <ErrorAlert message={error} />}
+      {categories && <CategoryList categories={categories} layout="grid" />}
+    </div>
+  );
+}
+```
+
+### Category Components
+- `CategoryList` - Display categories in grid/list layout
+- `CategoryBreadcrumb` - Show category navigation path
+- Location: `src/components/categories/`
+
+### Async Thunks
+- `fetchCategoriesThunk(includeInactive?)` - All categories
+- `fetchTopLevelCategoriesThunk()` - Root only
+- `fetchCategoryByIdThunk(id)` - Single category
+- `fetchCategoryChildrenThunk(parentId)` - Children
+- `createCategoryThunk(data)` - Admin create
+- `updateCategoryThunk({id, data})` - Admin update
+- `deleteCategoryThunk(id)` - Admin delete

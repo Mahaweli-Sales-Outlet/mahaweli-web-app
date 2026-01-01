@@ -1,6 +1,6 @@
-import type { Store } from "@reduxjs/toolkit";
+import type { AppStore } from "@/redux/store";
 
-let store: Store | null = null;
+let store: AppStore | null = null;
 
 /**
  * Injects the Redux store into the API client
@@ -10,7 +10,7 @@ let store: Store | null = null;
  *
  * @param _store - The Redux store instance
  */
-export function injectStore(_store: Store) {
+export function injectStore(_store: AppStore) {
   store = _store;
 }
 
@@ -18,6 +18,6 @@ export function injectStore(_store: Store) {
  * Gets the injected Redux store
  * Returns null if store hasn't been injected yet
  */
-export function getStore() {
+export function getStore(): AppStore | null {
   return store;
 }

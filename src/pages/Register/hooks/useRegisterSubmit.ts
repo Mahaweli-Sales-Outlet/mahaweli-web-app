@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { registerThunk, selectAuthError } from "@/redux/slices/authSlice";
+import { registerThunk, selectAuthError, clearError } from "@/redux/slices/authSlice";
 import type { RegisterFormData } from "../types";
 
 export function useRegisterSubmit() {
@@ -12,6 +12,7 @@ export function useRegisterSubmit() {
 
   const handleRegister = async (formData: RegisterFormData) => {
     setLoading(true);
+    dispatch(clearError());
 
     try {
       const result = await dispatch(
@@ -35,8 +36,7 @@ export function useRegisterSubmit() {
   };
 
   const clearApiError = () => {
-    // Note: Error clearing is handled by Redux on route changes
-    // This function is kept for input change handling in the component
+    dispatch(clearError());
   };
 
   return {

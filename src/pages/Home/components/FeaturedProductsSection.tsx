@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import ProductCard from "@/components/ProductCard";
-import type { Product } from "@/types";
+import type { Product } from "@/types/product.types";
 
 interface FeaturedProductsSectionProps {
   products: Product[];

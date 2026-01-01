@@ -1,6 +1,6 @@
 import { Tag } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
-import type { Product } from "@/types";
+import type { Product } from "@/types/product.types";
 
 interface ProductHeaderProps {
   product: Product;
@@ -15,7 +15,7 @@ export default function ProductHeader({ product }: ProductHeaderProps) {
           className="text-green-600 border-green-300 text-xs sm:text-sm"
         >
           <Tag className="w-3 h-3 mr-1" />
-          {product.category}
+          {product.category_name || "Uncategorized"}
         </Badge>
         {product.brand && product.brand !== "N/A" && (
           <Badge
@@ -33,7 +33,7 @@ export default function ProductHeader({ product }: ProductHeaderProps) {
         <div>
           <p className="text-xs sm:text-sm text-gray-500">Price (LKR)</p>
           <p className="text-3xl sm:text-4xl font-bold text-green-500">
-            {product.price?.toFixed(2)}
+            {Number(product.price || 0).toFixed(2)}
           </p>
         </div>
       </div>

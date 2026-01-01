@@ -18,6 +18,7 @@ import {
   useFormValidation,
   useRegisterSubmit,
 } from "./hooks";
+import { PASSWORD_REQUIREMENTS } from "./constants";
 
 const Register: React.FC = () => {
   const { formData, errors, setErrors, handleInputChange, clearError } =
@@ -112,16 +113,7 @@ const Register: React.FC = () => {
               {formData.password && (
                 <PasswordStrengthIndicator
                   strength={passwordStrength}
-                  requirements={[
-                    { key: "hasMinLength", label: "At least 8 characters" },
-                    { key: "hasUppercase", label: "One uppercase letter" },
-                    { key: "hasLowercase", label: "One lowercase letter" },
-                    { key: "hasNumber", label: "One number" },
-                    {
-                      key: "hasSpecialChar",
-                      label: "One special character (@$!%*?&)",
-                    },
-                  ]}
+                  requirements={PASSWORD_REQUIREMENTS}
                 />
               )}
             </div>

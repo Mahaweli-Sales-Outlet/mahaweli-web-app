@@ -3,7 +3,6 @@ import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import {
   updateProfileThunk,
-  selectUser,
   selectAuthError,
 } from "@/redux/slices/authSlice";
 import type { ProfileFormData } from "../types";
