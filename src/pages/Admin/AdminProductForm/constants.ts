@@ -19,7 +19,8 @@ export const INITIAL_FORM_DATA = {
   image_url: "",
   in_stock: true,
   stock_quantity: 0,
-  featured: false,
+  is_featured: false,
+  is_active: true,
 };
 
 export type ProductFormData = typeof INITIAL_FORM_DATA;

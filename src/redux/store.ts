@@ -4,34 +4,13 @@ import authReducer, { type AuthState } from "./slices/authSlice";
 import categoryReducer from "./slices/categorySlice";
 import productReducer from "./slices/productSlice";
 
-// Load auth state from localStorage on app startup
+// Load auth state from Redux (not localStorage)
+// With httpOnly cookies, tokens are automatically sent with API requests
+// No need to load from localStorage
 function loadAuthState(): AuthState {
-  const accessToken = localStorage.getItem("accessToken");
-  const userId = localStorage.getItem("userId");
-  const userEmail = localStorage.getItem("userEmail");
-
-  if (accessToken && userId && userEmail) {
-    // Restore user from localStorage
-    const user = {
-      id: userId,
-      email: userEmail,
-      name: localStorage.getItem("userName") || "User",
-      role: localStorage.getItem("userRole") || "customer",
-      phone: null,
-      store_id: null,
-      is_active: true,
-    };
-
-    return {
-      user,
-      isAuthenticated: true,
-      isInitialized: true,
-      loading: false,
-      error: null,
-    };
-  }
-
-  // No tokens, mark as initialized and not authenticated
+  // Start as unauthenticated
+  // Auth state will be restored when user API is called (e.g., GET /api/auth/me)
+  // or after successful login
   return {
     user: null,
     isAuthenticated: false,

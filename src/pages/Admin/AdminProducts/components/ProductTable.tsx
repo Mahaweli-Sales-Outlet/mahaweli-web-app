@@ -157,7 +157,7 @@ export default function ProductTable({
                     />
                     <div>
                       <p className="font-medium text-gray-900">{product.name}</p>
-                      {product.featured && (
+                      {product.is_featured && (
                         <Badge className="mt-1 bg-purple-100 text-purple-700 border-0 text-xs">
                           Featured
                         </Badge>

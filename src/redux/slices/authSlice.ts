@@ -35,14 +35,9 @@ export const loginThunk = createAsyncThunk(
     try {
       const response = await authApi.login(credentials);
       if (response?.data?.user) {
-        const { user, accessToken, refreshToken } = response.data;
-        // Store tokens in localStorage
-        localStorage.setItem("accessToken", accessToken);
-        localStorage.setItem("refreshToken", refreshToken);
-        localStorage.setItem("userId", user.id);
-        localStorage.setItem("userRole", user.role);
-        localStorage.setItem("userEmail", user.email);
-        localStorage.setItem("userName", user.name);
+        const { user } = response.data;
+        // Tokens are automatically set as httpOnly cookies by backend
+        // No need to store in localStorage
         return user;
       }
       return rejectWithValue("Login failed: Invalid response");
@@ -60,14 +55,9 @@ export const registerThunk = createAsyncThunk(
     try {
       const response = await authApi.register(data);
       if (response?.data?.user) {
-        const { user, accessToken, refreshToken } = response.data;
-        // Store tokens in localStorage
-        localStorage.setItem("accessToken", accessToken);
-        localStorage.setItem("refreshToken", refreshToken);
-        localStorage.setItem("userId", user.id);
-        localStorage.setItem("userRole", user.role);
-        localStorage.setItem("userEmail", user.email);
-        localStorage.setItem("userName", user.name);
+        const { user } = response.data;
+        // Tokens are automatically set as httpOnly cookies by backend
+        // No need to store in localStorage
         return user;
       }
       return rejectWithValue("Registration failed: Invalid response");
@@ -83,21 +73,15 @@ export const logoutThunk = createAsyncThunk(
   "auth/logout",
   async () => {
     try {
-      // Call logout API (optional, backend treats it as no-op)
+      // Call logout API to clear cookies on backend
       await authApi.logout();
     } catch (error) {
       console.error("Logout API error:", error);
       // Continue with local logout even if API fails
     }
 
-    // Clear all auth tokens and data from localStorage
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("userEmail");
-    localStorage.removeItem("userName");
-
+    // Tokens are in httpOnly cookies - they're automatically cleared by backend
+    // No localStorage to clear
     return null;
   }
 );
@@ -139,16 +123,13 @@ export const refreshTokenThunk = createAsyncThunk(
   "auth/refreshToken",
   async (_, { rejectWithValue }) => {
     try {
-      const refreshToken = localStorage.getItem("refreshToken");
-      if (!refreshToken) {
-        return rejectWithValue("No refresh token available");
-      }
-
-      const response = await authApi.refreshToken(refreshToken);
-      if (response?.accessToken) {
-        const { accessToken } = response;
-        localStorage.setItem("accessToken", accessToken);
-        return { accessToken };
+      // Refresh token is in httpOnly cookie, just call the endpoint
+      // Backend will handle token in cookie and set new accessToken cookie
+      const response = await authApi.refreshToken("");
+      
+      if (response?.data?.accessToken) {
+        // Token is automatically set in cookie by backend
+        return { accessToken: response.data.accessToken };
       }
       return rejectWithValue("Token refresh failed: Invalid response");
     } catch (error: any) {

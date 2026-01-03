@@ -46,6 +46,22 @@ export function ProductAdvancedFields({
             }
           />
         </div>
+        
+        <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+          <div>
+            <Label htmlFor="is_active" className="text-base">
+              Active Product
+            </Label>
+            <p className="text-sm text-gray-600">Available for sale</p>
+          </div>
+          <Switch
+            id="is_active"
+            checked={formData.is_active}
+            onCheckedChange={(checked) =>
+              onFormChange({ is_active: checked })
+            }
+          />
+        </div>
       </div>
     </>
   );

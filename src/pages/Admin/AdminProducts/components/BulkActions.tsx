@@ -1,19 +1,15 @@
 import { Button } from "@/components/ui/button";
-import { Trash2, CheckCircle, XCircle } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 interface BulkActionsProps {
   selectedIds: string[];
   onDelete: () => void;
-  onActivate: () => void;
-  onDeactivate: () => void;
   onClearSelection: () => void;
 }
 
 export default function BulkActions({
   selectedIds,
   onDelete,
-  onActivate,
-  onDeactivate,
   onClearSelection,
 }: BulkActionsProps) {
   if (selectedIds.length === 0) return null;
@@ -29,36 +25,24 @@ export default function BulkActions({
             <Button
               size="sm"
               variant="outline"
-              onClick={onActivate}
-              className="gap-2"
-            >
-              <CheckCircle className="w-4 h-4" />
-              Activate
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onDeactivate}
-              className="gap-2"
-            >
-              <XCircle className="w-4 h-4" />
-              Deactivate
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
               onClick={onDelete}
-              className="gap-2 text-red-600 hover:bg-red-50"
+              className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
             >
               <Trash2 className="w-4 h-4" />
               Delete
             </Button>
           </div>
         </div>
-        <Button size="sm" variant="ghost" onClick={onClearSelection}>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={onClearSelection}
+          className="text-gray-600"
+        >
           Clear Selection
         </Button>
       </div>
     </div>
   );
 }
+

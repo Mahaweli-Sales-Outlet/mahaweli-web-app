@@ -56,9 +56,12 @@ export const fetchProductsThunk = createAsyncThunk(
   "product/fetchProducts",
   async (filters: ProductFilters = {}, { rejectWithValue }) => {
     try {
+      console.log("fetchProductsThunk: Starting API call with filters:", filters);
       const result = await productApi.getAll(filters);
+      console.log("fetchProductsThunk: API call successful, result:", result);
       return result;
     } catch (error: any) {
+      console.error("fetchProductsThunk: API call failed:", error);
       return rejectWithValue(
         error.response?.data?.error?.message || "Failed to fetch products"
       );
@@ -127,9 +130,12 @@ export const fetchFeaturedProductsThunk = createAsyncThunk(
   "product/fetchFeatured",
   async (limit: number = 8, { rejectWithValue }) => {
     try {
+      console.log("📦 Redux fetchFeaturedProductsThunk - Fetching with limit:", limit);
       const products = await productApi.getFeatured(limit);
+      console.log("📦 Redux fetchFeaturedProductsThunk - Received products:", products);
       return products;
     } catch (error: any) {
+      console.error("❌ Redux fetchFeaturedProductsThunk - Error:", error);
       return rejectWithValue(
         error.response?.data?.error?.message || "Failed to fetch featured products"
       );
@@ -182,9 +188,12 @@ export const createProductThunk = createAsyncThunk(
   "product/create",
   async (data: CreateProductDTO, { rejectWithValue }) => {
     try {
+      console.log("createProductThunk: Starting API call with data:", data);
       const product = await productApi.create(data);
+      console.log("createProductThunk: API call successful, product:", product);
       return product;
     } catch (error: any) {
+      console.error("createProductThunk: API call failed:", error);
       return rejectWithValue(
         error.response?.data?.error?.message || "Failed to create product"
       );
@@ -285,8 +294,19 @@ const productSlice = createSlice({
       })
       .addCase(fetchProductsThunk.fulfilled, (state, action) => {
         state.loading = false;
-        state.products = action.payload.data;
-        state.pagination = action.payload.pagination;
+        console.log("fetchProductsThunk.fulfilled reducer, payload:", action.payload);
+        // Handle both direct array and paginated response
+        if (Array.isArray(action.payload)) {
+          state.products = action.payload;
+          state.pagination = null;
+        } else if (action.payload.data) {
+          state.products = action.payload.data;
+          state.pagination = action.payload.pagination || null;
+        } else {
+          state.products = [];
+          state.pagination = null;
+        }
+        console.log("Products set to:", state.products);
       })
       .addCase(fetchProductsThunk.rejected, (state, action) => {
         state.loading = false;
@@ -341,14 +361,18 @@ const productSlice = createSlice({
     // Fetch Featured Products
     builder
       .addCase(fetchFeaturedProductsThunk.pending, (state) => {
+        console.log("📦 Redux reducer - fetchFeaturedProductsThunk.pending");
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchFeaturedProductsThunk.fulfilled, (state, action) => {
+        console.log("📦 Redux reducer - fetchFeaturedProductsThunk.fulfilled with payload:", action.payload);
         state.loading = false;
-        state.featuredProducts = action.payload;
+        state.featuredProducts = Array.isArray(action.payload) ? action.payload : [];
+        console.log("📦 Redux reducer - featuredProducts set to:", state.featuredProducts);
       })
       .addCase(fetchFeaturedProductsThunk.rejected, (state, action) => {
+        console.error("❌ Redux reducer - fetchFeaturedProductsThunk.rejected:", action.payload);
         state.loading = false;
         state.error = action.payload as string;
       });
@@ -391,6 +415,9 @@ const productSlice = createSlice({
       })
       .addCase(createProductThunk.fulfilled, (state, action) => {
         state.loading = false;
+        if (!state.products) {
+          state.products = [];
+        }
         state.products.unshift(action.payload);
       })
       .addCase(createProductThunk.rejected, (state, action) => {
@@ -406,6 +433,9 @@ const productSlice = createSlice({
       })
       .addCase(updateProductThunk.fulfilled, (state, action) => {
         state.loading = false;
+        if (!state.products) {
+          state.products = [];
+        }
         const index = state.products.findIndex(
           (p) => p.id === action.payload.id
         );
@@ -429,7 +459,9 @@ const productSlice = createSlice({
       })
       .addCase(deleteProductThunk.fulfilled, (state, action) => {
         state.loading = false;
-        state.products = state.products.filter((p) => p.id !== action.payload);
+        if (state.products) {
+          state.products = state.products.filter((p) => p.id !== action.payload);
+        }
         if (state.selectedProduct?.id === action.payload) {
           state.selectedProduct = null;
         }
@@ -448,11 +480,13 @@ const productSlice = createSlice({
       .addCase(adjustStockThunk.fulfilled, (state, action) => {
         state.loading = false;
         // Update product in list with new stock
-        const product = state.products.find(
-          (p) => p.id === action.payload.product_id
-        );
-        if (product) {
-          product.stock_quantity = action.payload.new_quantity;
+        if (state.products) {
+          const product = state.products.find(
+            (p) => p.id === action.payload.product_id
+          );
+          if (product) {
+            product.stock_quantity = action.payload.new_quantity;
+          }
         }
         if (state.selectedProduct?.id === action.payload.product_id) {
           state.selectedProduct.stock_quantity = action.payload.new_quantity;

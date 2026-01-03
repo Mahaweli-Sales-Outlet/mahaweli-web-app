@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
-import { Plus, ArrowLeft } from "lucide-react";
+import { Plus, ArrowLeft, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
+import type { Product, StockAdjustmentDTO } from "@/types/product.types";
 import {
   ProductStats,
   ProductFilters,
@@ -24,14 +26,19 @@ import {
 
 export default function AdminProducts() {
   const navigate = useNavigate();
+  
+  // Dialog states
   const [deleteProductId, setDeleteProductId] = useState<string | null>(null);
+  const [stockAdjustProduct, setStockAdjustProduct] = useState<Product | null>(null);
+  
+  // Filter states
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [stockFilter, setStockFilter] = useState("all");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [stockAdjustProduct, setStockAdjustProduct] = useState<any>(null);
 
-  const { products, isLoading } = useProductsData();
+  // Data and operations
+  const { products, isLoading, error } = useProductsData();
   const categories = useProductCategories(products);
   const filteredProducts = useProductFilters(
     products,
@@ -39,42 +46,68 @@ export default function AdminProducts() {
     categoryFilter,
     stockFilter
   );
-  const deleteMutation = useDeleteProduct();
-  const stockAdjustMutation = useStockAdjustment();
-  const bulkOperations = useBulkOperations();
+  const { deleteProduct, loading: deleteLoading } = useDeleteProduct();
+  const { adjustStock, loading: stockLoading } = useStockAdjustment();
+  const { deleteBulk } = useBulkOperations();
 
-  const handleBulkDelete = () => {
-    if (window.confirm(`Delete ${selectedIds.length} products?`)) {
-      bulkOperations.deleteBulk.mutate(selectedIds, {
-        onSuccess: () => setSelectedIds([]),
-      });
-    }
-  };
-
-  const handleBulkActivate = () => {
-    bulkOperations.updateBulk.mutate(
-      { productIds: selectedIds, updates: { is_active: true } },
-      { onSuccess: () => setSelectedIds([]) }
-    );
-  };
-
-  const handleBulkDeactivate = () => {
-    bulkOperations.updateBulk.mutate(
-      { productIds: selectedIds, updates: { is_active: false } },
-      { onSuccess: () => setSelectedIds([]) }
-    );
-  };
-
-  const handleStockAdjust = (adjustment: any) => {
-    if (stockAdjustProduct) {
-      stockAdjustMutation.mutate(
-        { productId: stockAdjustProduct.id, data: adjustment },
-        {
-          onSuccess: () => setStockAdjustProduct(null),
+  const handleDelete = useCallback(
+    async (productId: string) => {
+      try {
+        const success = await deleteProduct(productId);
+        if (success) {
+          toast.success("Product deleted successfully");
+          setDeleteProductId(null);
+        } else {
+          toast.error("Failed to delete product");
         }
-      );
+      } catch (err) {
+        console.error("Delete error:", err);
+        toast.error("An error occurred while deleting the product");
+      }
+    },
+    [deleteProduct]
+  );
+
+  const handleBulkDelete = useCallback(async () => {
+    if (selectedIds.length === 0) return;
+
+    if (!window.confirm(`Delete ${selectedIds.length} selected product(s)?`)) {
+      return;
     }
-  };
+
+    try {
+      const success = await deleteBulk(selectedIds);
+      if (success) {
+        toast.success(`${selectedIds.length} product(s) deleted successfully`);
+        setSelectedIds([]);
+      } else {
+        toast.error("Some products failed to delete");
+      }
+    } catch (err) {
+      console.error("Bulk delete error:", err);
+      toast.error("An error occurred during bulk deletion");
+    }
+  }, [selectedIds, deleteBulk]);
+
+  const handleStockAdjust = useCallback(
+    async (adjustment: StockAdjustmentDTO) => {
+      if (!stockAdjustProduct) return;
+
+      try {
+        const success = await adjustStock(stockAdjustProduct.id, adjustment);
+        if (success) {
+          toast.success("Stock adjusted successfully");
+          setStockAdjustProduct(null);
+        } else {
+          toast.error("Failed to adjust stock");
+        }
+      } catch (err) {
+        console.error("Stock adjustment error:", err);
+        toast.error("An error occurred while adjusting stock");
+      }
+    },
+    [stockAdjustProduct, adjustStock]
+  );
 
   return (
     <div className="min-h-screen p-8">
@@ -109,6 +142,16 @@ export default function AdminProducts() {
           </div>
         </div>
 
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="font-semibold text-red-800 mb-1">Error Loading Products</h3>
+              <p className="text-red-700 text-sm">{error}</p>
+            </div>
+          </div>
+        )}
+
         <ProductStats products={products} />
 
         <LowStockAlert products={products} />
@@ -116,8 +159,6 @@ export default function AdminProducts() {
         <BulkActions
           selectedIds={selectedIds}
           onDelete={handleBulkDelete}
-          onActivate={handleBulkActivate}
-          onDeactivate={handleBulkDeactivate}
           onClearSelection={() => setSelectedIds([])}
         />
 
@@ -148,14 +189,9 @@ export default function AdminProducts() {
 
       <DeleteProductDialog
         isOpen={!!deleteProductId}
-        onConfirm={() =>
-          deleteProductId &&
-          deleteMutation.mutate(deleteProductId, {
-            onSuccess: () => setDeleteProductId(null),
-          })
-        }
+        onConfirm={() => deleteProductId && handleDelete(deleteProductId)}
         onCancel={() => setDeleteProductId(null)}
-        isLoading={deleteMutation.isPending}
+        isLoading={deleteLoading}
       />
 
       <StockAdjustmentDialog
@@ -163,7 +199,7 @@ export default function AdminProducts() {
         product={stockAdjustProduct}
         onClose={() => setStockAdjustProduct(null)}
         onAdjust={handleStockAdjust}
-        isLoading={stockAdjustMutation.isPending}
+        isLoading={stockLoading}
       />
     </div>
   );

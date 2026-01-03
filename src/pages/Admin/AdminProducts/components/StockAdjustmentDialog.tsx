@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { StockAdjustmentDTO, InventoryTransactionType } from "@/types/product.types";
 
 interface StockAdjustmentDialogProps {
   isOpen: boolean;
@@ -25,21 +26,16 @@ interface StockAdjustmentDialogProps {
     stock_quantity: number;
   } | null;
   onClose: () => void;
-  onAdjust: (adjustment: {
-    quantity: number;
-    reason: string;
-    notes?: string;
-  }) => void;
+  onAdjust: (adjustment: StockAdjustmentDTO) => void;
   isLoading: boolean;
 }
 
-const ADJUSTMENT_REASONS = [
-  { value: "restock", label: "Restock" },
+const ADJUSTMENT_REASONS: { value: InventoryTransactionType; label: string }[] = [
+  { value: "purchase", label: "Purchase/Restock" },
   { value: "sale", label: "Sale" },
-  { value: "damage", label: "Damage/Loss" },
+  { value: "adjustment", label: "Stock Correction" },
   { value: "return", label: "Return" },
-  { value: "correction", label: "Stock Correction" },
-  { value: "other", label: "Other" },
+  { value: "damage", label: "Damage/Loss" },
 ];
 
 export default function StockAdjustmentDialog({
@@ -50,20 +46,20 @@ export default function StockAdjustmentDialog({
   isLoading,
 }: StockAdjustmentDialogProps) {
   const [quantity, setQuantity] = useState("");
+  const [transactionType, setTransactionType] = useState<InventoryTransactionType>("adjustment");
   const [reason, setReason] = useState("");
-  const [notes, setNotes] = useState("");
 
   const handleSubmit = () => {
-    if (!quantity || !reason) return;
+    if (!quantity || !transactionType) return;
     onAdjust({
       quantity: parseInt(quantity),
-      reason,
-      notes: notes || undefined,
+      transaction_type: transactionType,
+      reason: reason || undefined,
     });
     // Reset form
     setQuantity("");
+    setTransactionType("adjustment");
     setReason("");
-    setNotes("");
   };
 
   const newStock = product
@@ -108,10 +104,10 @@ export default function StockAdjustmentDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="reason">Reason</Label>
-              <Select value={reason} onValueChange={setReason}>
+              <Label htmlFor="transactionType">Transaction Type</Label>
+              <Select value={transactionType} onValueChange={(val) => setTransactionType(val as InventoryTransactionType)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select reason" />
+                  <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
                   {ADJUSTMENT_REASONS.map((r) => (
@@ -124,12 +120,12 @@ export default function StockAdjustmentDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="notes">Notes (Optional)</Label>
+              <Label htmlFor="reason">Reason (Optional)</Label>
               <Input
-                id="notes"
+                id="reason"
                 placeholder="Additional details..."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
               />
             </div>
           </div>
@@ -141,7 +137,7 @@ export default function StockAdjustmentDialog({
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={!quantity || !reason || isLoading}
+            disabled={!quantity || !transactionType || isLoading}
           >
             {isLoading ? "Adjusting..." : "Adjust Stock"}
           </Button>

@@ -36,7 +36,7 @@ export const STATS_CONFIG = [
     key: "featured",
     label: "Featured",
     icon: Package,
-    getCount: (products: any[]) => products.filter((p: any) => p.featured).length,
+    getCount: (products: any[]) => products.filter((p: any) => p.is_featured).length,
   },
 ];
 

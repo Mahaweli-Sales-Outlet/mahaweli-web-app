@@ -1,44 +1,43 @@
-import { useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { productApi } from "@/api";
+import { useMemo, useEffect } from "react";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import {
+  fetchProductsThunk,
+  deleteProductThunk,
+  adjustStockThunk,
+  selectProducts,
+  selectProductLoading,
+  selectProductError,
+} from "@/redux/slices/productSlice";
+import type { StockAdjustmentDTO } from "@/types/product.types";
 
+/**
+ * Fetch all products from Redux
+ * Dispatches fetchProductsThunk on mount
+ */
 export const useProductsData = () => {
-  const { data: result, isLoading } = useQuery({
-    queryKey: ["admin-products"],
-    queryFn: () => productApi.getAll(),
-  });
+  const dispatch = useAppDispatch();
+  const products = useAppSelector(selectProducts);
+  const loading = useAppSelector(selectProductLoading);
+  const error = useAppSelector(selectProductError);
 
-  // Extract and map products from paginated result
-  const products = useMemo(() => {
-    // Handle different response shapes
-    // 1) direct array
-    // 2) { data: [...] }
-    // 3) { data: { data: [...], pagination } }
-    let rawProducts: any[] = [];
+  useEffect(() => {
+    dispatch(fetchProductsThunk({}));
+  }, [dispatch]);
 
-    if (Array.isArray(result)) {
-      rawProducts = result;
-    } else if (Array.isArray((result as any)?.data)) {
-      rawProducts = (result as any).data;
-    } else if (Array.isArray((result as any)?.data?.data)) {
-      rawProducts = (result as any).data.data;
-    }
-    return rawProducts.map((p: any) => ({
-      ...p,
-      category: p.category_name || p.category_id || "Uncategorized",
-      in_stock: p.stock_quantity > 0,
-      featured: p.is_featured,
-    }));
-  }, [result]);
-
-  return { products, isLoading };
+  return { products: products || [], isLoading: loading, error };
 };
 
+/**
+ * Extract unique categories from products
+ */
 export const useProductCategories = (products: any[]) => {
   return useMemo(() => {
+    if (!Array.isArray(products)) return [];
+    
     const set = new Set<string>();
     for (const p of products) {
-      const category = p?.category || p?.category_name;
+      // Try category_name, category_id, or use default
+      const category = p?.category_name || p?.category_id || "Uncategorized";
       if (category && typeof category === "string") {
         set.add(category);
       }
@@ -47,56 +46,64 @@ export const useProductCategories = (products: any[]) => {
   }, [products]);
 };
 
+/**
+ * Delete a single product via Redux
+ */
 export const useDeleteProduct = () => {
-  const queryClient = useQueryClient();
+  const dispatch = useAppDispatch();
+  const loading = useAppSelector(selectProductLoading);
+  const error = useAppSelector(selectProductError);
 
-  return useMutation({
-    mutationFn: (productId: string) => productApi.delete(productId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
-    },
-  });
-};
-
-export const useStockAdjustment = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ productId, data }: { productId: string; data: any }) => 
-      productApi.adjustStock(productId, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
-    },
-  });
-};
-
-export const useBulkOperations = () => {
-  const queryClient = useQueryClient();
-
-  const deleteMutation = useMutation({
-    mutationFn: async (productIds: string[]) => {
-      await Promise.all(productIds.map((id) => productApi.delete(id)));
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async ({ productIds, updates }: { productIds: string[]; updates: any }) => {
-      await Promise.all(productIds.map((id) => productApi.update(id, updates)));
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
-    },
-  });
-
-  return {
-    deleteBulk: deleteMutation,
-    updateBulk: updateMutation,
+  const deleteProduct = async (productId: string) => {
+    const result = await dispatch(deleteProductThunk(productId));
+    return deleteProductThunk.fulfilled.match(result);
   };
+
+  return { deleteProduct, loading, error };
 };
 
+/**
+ * Adjust product stock via Redux
+ */
+export const useStockAdjustment = () => {
+  const dispatch = useAppDispatch();
+  const loading = useAppSelector(selectProductLoading);
+  const error = useAppSelector(selectProductError);
+
+  const adjustStock = async (productId: string, data: StockAdjustmentDTO) => {
+    const result = await dispatch(adjustStockThunk({ id: productId, data }));
+    return adjustStockThunk.fulfilled.match(result);
+  };
+
+  return { adjustStock, loading, error };
+};
+
+/**
+ * Bulk operations (delete multiple, update multiple)
+ */
+export const useBulkOperations = () => {
+  const dispatch = useAppDispatch();
+  const loading = useAppSelector(selectProductLoading);
+  const error = useAppSelector(selectProductError);
+
+  const deleteBulk = async (productIds: string[]) => {
+    try {
+      const results = await Promise.all(
+        productIds.map((id) => dispatch(deleteProductThunk(id)))
+      );
+      return results.every((r) => deleteProductThunk.fulfilled.match(r));
+    } catch (err) {
+      console.error("Bulk delete error:", err);
+      return false;
+    }
+  };
+
+  return { deleteBulk, loading, error };
+};
+
+/**
+ * Filter products by search, category, and stock status
+ */
 export const useProductFilters = (
   products: any[],
   searchQuery: string,
@@ -104,17 +111,25 @@ export const useProductFilters = (
   stockFilter: string
 ) => {
   return useMemo(() => {
+    if (!Array.isArray(products)) return [];
+    
     return products.filter((product: any) => {
       const matchesSearch =
         product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.brand?.toLowerCase().includes(searchQuery.toLowerCase());
+
       const matchesCategory =
-        categoryFilter === "all" || product.category === categoryFilter;
+        categoryFilter === "all" ||
+        product.category_name === categoryFilter ||
+        product.category_id === categoryFilter;
+
+      const inStock = product.stock_quantity > 0;
       const matchesStock =
         stockFilter === "all" ||
-        (stockFilter === "in_stock" && product.in_stock) ||
-        (stockFilter === "out_of_stock" && !product.in_stock);
+        (stockFilter === "in_stock" && inStock) ||
+        (stockFilter === "out_of_stock" && !inStock);
+
       return matchesSearch && matchesCategory && matchesStock;
     });
   }, [products, searchQuery, categoryFilter, stockFilter]);

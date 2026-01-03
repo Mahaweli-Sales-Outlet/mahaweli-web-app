@@ -1,22 +1,34 @@
-import { useQuery } from "@tanstack/react-query";
-import { productApi } from "@/api/products";
-import type { Product } from "@/types/product.types";
+import { useEffect } from "react";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import {
+  fetchFeaturedProductsThunk,
+  selectFeaturedProducts,
+  selectProductLoading,
+  selectProductError,
+} from "@/redux/slices/productSlice";
 
 export function useFeaturedProducts() {
-  const { data: products = [], isLoading, error } = useQuery({
-    queryKey: ["featured-products"],
-    queryFn: async () => {
-      // getFeatured already returns Product[] directly
-      const result = await productApi.getFeatured();
-      return Array.isArray(result) ? result : [];
-    },
-  });
+  const dispatch = useAppDispatch();
+  const products = useAppSelector(selectFeaturedProducts);
+  const isLoading = useAppSelector(selectProductLoading);
+  const error = useAppSelector(selectProductError);
 
-  const productList = Array.isArray(products) ? products : [];
+  useEffect(() => {
+    console.log("📦 HomePage useFeaturedProducts - Fetching featured products");
+    dispatch(fetchFeaturedProductsThunk(8));
+  }, [dispatch]);
+
   // Filter for featured and in-stock products
-  const featuredProducts = productList.filter(
-    (p: Product) => p.is_featured && p.stock_quantity > 0
-  );
+  const featuredProducts = Array.isArray(products)
+    ? products.filter((p) => p.is_featured && p.stock_quantity > 0)
+    : [];
+
+  console.log("📦 HomePage useFeaturedProducts - Featured products:", {
+    products,
+    featuredProducts,
+    isLoading,
+    error,
+  });
 
   return {
     featuredProducts,

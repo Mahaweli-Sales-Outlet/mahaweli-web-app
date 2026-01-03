@@ -22,9 +22,10 @@ export default function AdminProductForm() {
     errors,
     categories,
     categoriesLoading,
+    loading,
+    error,
     handleImageUpload,
     handleSubmit,
-    saveMutation,
   } = useProductForm();
 
   const handleFieldChange = (updates: Partial<typeof formData>) => {
@@ -48,6 +49,9 @@ export default function AdminProductForm() {
             <CardTitle className="text-2xl">
               {productId ? "Edit Product" : "Add New Product"}
             </CardTitle>
+            {error && (
+              <p className="text-sm text-red-600 mt-2">{error}</p>
+            )}
           </CardHeader>
           <CardContent className="pt-6">
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -77,7 +81,7 @@ export default function AdminProductForm() {
               />
 
               <ProductFormActions
-                isLoading={saveMutation.isPending}
+                isLoading={loading}
                 onCancel={() => navigate(createPageUrl("AdminProducts"))}
                 isEditing={!!productId}
                 onSubmit={handleSubmit}
