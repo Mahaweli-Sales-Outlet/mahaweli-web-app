@@ -1,4 +1,7 @@
-import axios from "axios";
+import axios, { type AxiosError } from "axios";
+import { getStore } from "./setupInterceptors";
+import { logoutThunk, refreshTokenThunk } from "@/redux/slices/authSlice";
+import { addCsrfTokenToConfig } from "@/utils/csrf";
 
 // Configure your API base URL here
 const API_BASE_URL =
@@ -9,46 +12,70 @@ export const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  // Enable sending cookies with requests
+  withCredentials: true,
 });
 
-// Add request interceptor for authentication
+// Add request interceptor to include CSRF token
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("accessToken");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
+  return addCsrfTokenToConfig(config);
 });
 
-// Add response interceptor for error handling
+// Add response interceptor for error handling with token refresh
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      const token = localStorage.getItem("accessToken");
-      // Only redirect if user is already authenticated (not during login)
-      if (token) {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("userRole");
-        localStorage.removeItem("userEmail");
-        localStorage.removeItem("userName");
-        localStorage.removeItem("userId");
-        window.location.href = "/login";
+  async (error: AxiosError) => {
+    const originalRequest = error.config as any;
+
+    // Handle 401 errors (Unauthorized - token expired or invalid)
+    if (error.response?.status === 401 && originalRequest) {
+      // Prevent infinite retry loops - only retry once per request
+      if (!originalRequest._retry) {
+        originalRequest._retry = true;
+
+        const store = getStore();
+        if (!store) {
+          // Store not injected yet, just reject
+          return Promise.reject(error);
+        }
+
+        try {
+          // Attempt to refresh the token
+          // Token is in cookie, just call refresh endpoint
+          const result = await store.dispatch(refreshTokenThunk());
+
+          if (refreshTokenThunk.fulfilled.match(result)) {
+            // Token refreshed successfully, retry original request
+            // (cookies are automatically sent with new token)
+            return api(originalRequest);
+          } else {
+            // Token refresh failed, logout
+            await store.dispatch(logoutThunk());
+            return Promise.reject(error);
+          }
+        } catch (refreshError) {
+          // Error during refresh, logout and reject
+          const store = getStore();
+          if (store) {
+            await store.dispatch(logoutThunk());
+          }
+          return Promise.reject(refreshError || error);
+        }
+      } else {
+        // Already retried once, logout user
+        const store = getStore();
+        if (store) {
+          await store.dispatch(logoutThunk());
+        }
+        return Promise.reject(error);
       }
     }
+
     return Promise.reject(error);
   }
 );
 
-// API endpoints
-export const productApi = {
-  getAll: () => api.get("/products"),
-  getById: (id: number) => api.get(`/products/${id}`),
-  create: (data: any) => api.post("/products", data),
-  update: (id: number, data: any) => api.put(`/products/${id}`, data),
-  delete: (id: number) => api.delete(`/products/${id}`),
-};
+// API endpoints - Product API moved to @/api/products.ts
 
 export const orderApi = {
   getAll: () => api.get("/orders"),

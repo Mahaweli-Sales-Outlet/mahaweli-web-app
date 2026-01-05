@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useAppSelector } from "../../redux/hooks";
-import { authApi } from "@/api/auth";
+import { useAppSelector, useAppDispatch } from "../../redux/hooks";
+import {
+  selectUser,
+  selectAuthError,
+  clearError,
+  logoutThunk,
+} from "@/redux/slices/authSlice";
 import AdminNav from "./AdminNav";
 import CustomerNav from "./CustomerNav";
 import Footer from "./Footer";
-
-interface User {
-  id?: string;
-  name: string;
-  email: string;
-  role: string;
-}
 
 interface LayoutProps {
   isAdmin?: boolean;
@@ -20,58 +18,53 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ isAdmin = false }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const reduxUser = useAppSelector(selectUser);
+  const authError = useAppSelector(selectAuthError);
   const cartItems = useAppSelector((state) => state.cart.items);
   const cartItemsCount = cartItems.reduce(
     (sum, item) => sum + item.quantity,
     0
   );
 
-  // Update user on mount and when accessToken changes
-  useEffect(() => {
-    const fetchUser = () => {
-      authApi
-        .getCurrentUser()
-        .then((response: any) => {
-          setUser(response.data.user);
-        })
-        .catch(() => {
-          setUser(null);
-        });
-    };
-    fetchUser();
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === "accessToken") fetchUser();
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, []);
-
+  // Scroll to top on route change
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
+  // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
 
+  // Clear auth errors on route change
+  useEffect(() => {
+    if (authError) {
+      dispatch(clearError());
+    }
+  }, [location.pathname, dispatch, authError]);
+
+  // Handle logout
   const handleLogout = async () => {
     try {
-      await authApi.logout();
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("userRole");
-      localStorage.removeItem("userEmail");
-      localStorage.removeItem("userName");
-      localStorage.removeItem("userId");
-      setUser(null);
+      await dispatch(logoutThunk());
       navigate("/");
     } catch (error) {
       console.error("Logout error:", error);
       navigate("/");
     }
   };
+
+  // Transform Redux user to local user format
+  const user = reduxUser
+    ? {
+        id: reduxUser.id,
+        name: reduxUser.name,
+        email: reduxUser.email,
+        role: reduxUser.role,
+      }
+    : null;
 
   if (isAdmin) {
     return (

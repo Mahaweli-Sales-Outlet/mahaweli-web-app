@@ -1,0 +1,26 @@
+// Legacy constant - kept for backwards compatibility
+export const PRODUCT_CATEGORIES = [
+  "Dairy",
+  "Oils & Ghee",
+  "Juices",
+  "Treacle & Jaggery",
+  "Traditional Sweets",
+  "Herbal Products",
+  "Spices",
+  "Beverages",
+];
+
+export const INITIAL_FORM_DATA = {
+  name: "",
+  brand: "",
+  description: "",
+  price: "",
+  category_id: "",
+  image_url: "",
+  in_stock: true,
+  stock_quantity: 0,
+  is_featured: false,
+  is_active: true,
+};
+
+export type ProductFormData = typeof INITIAL_FORM_DATA;
